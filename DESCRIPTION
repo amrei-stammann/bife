@@ -1,0 +1,23 @@
+Package: bife
+Type: Package
+Title: Binary Choice Models with Fixed Effects
+Version: 0.6
+Authors@R: c(person("Amrei", "Stammann", email = "amrei.stammann@hhu.de", role = c("aut", "cre")),
+             person("Daniel", "Czarnowske", email = "daniel.czarnowske@hhu.de", role = "aut",
+             comment = c(ORCID = "0000-0002-0030-929X")),
+             person("Florian", "Heiss", email = "florian.heiss@hhu.de", role = "aut"),
+             person("Daniel", "McFadden", email = "mcfadden@econ.berkeley.edu", role = "ctb"))
+Description: Estimates fixed effects binary choice models (logit and probit) with potentially many
+  individual fixed effects and computes average partial effects. Incidental parameter bias can be
+  reduced with an asymptotic bias-correction proposed by Fernandez-Val (2009) 
+  <doi:10.1016/j.jeconom.2009.02.007>.
+License: GPL (>= 2)
+Depends: R (>= 3.1.0)
+Imports: data.table, Formula, Rcpp, stats
+LinkingTo: Rcpp, RcppArmadillo
+URL: https://github.com/amrei-stammann/bife
+BugReports: https://github.com/amrei-stammann/bife/issues
+RoxygenNote: 6.1.1
+LazyData: true
+Suggests: alpaca, knitr
+VignetteBuilder: knitr

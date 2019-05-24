@@ -1,0 +1,220 @@
+---
+title: "How to use bife"
+output: rmarkdown::html_vignette
+bibliography: refs.bib
+vignette: >
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{How to use bife}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+## Binary choice models with individual fixed effects
+
+In econometrics, fixed effects binary choice models are important tools for panel data analysis. Our package provides an approach suggested by @sta16 to estimate logit and probit panel data models of the following form:
+
+$$
+y_{it} = \mathbf{1}\left[\mathbf{x}_{it}\boldsymbol{\beta} + \alpha_{i} > \epsilon_{it}\right] \;,
+$$
+
+where $i = 1, \dots, N$ and $t = 1, \dots, T_i$ denote different panel indices. In many applications, $i$ represents individuals, firms or other cross-sectional units and $t$ represents time in a longitudinal data set. But the setup is also useful for instance if $i$ represents ZIP code areas and $t$ is an index of individuals. 
+
+We are primarily interested in estimating the parameters $\boldsymbol{\beta}$, but the model also includes individual fixed effects $\alpha_{i}$. We assume $E(\epsilon_{it} | \mathbf{X}_{i}, \alpha_{i}) = 0$ but do not make any assumptions about the marginal distribution of $\alpha_{i}$ or its correlation with the regressors $\mathbf{x}_{i1},\dots, \mathbf{x}_{iT_i}$.
+
+The estimator implemented in this package is based on maximum likelihood estimation (ML) of both $\boldsymbol{\beta}$ and $\alpha_{1}, \dots, \alpha_{N}$. It actually is equivalent to a generalized linear model (`glm()`) for binomial data where the set of regressors is extended by a dummy variable for each  individual. The main difference is that `bife()` applies a pseudo-demeaning algorithm proposed by @sta16 to concentrate out the fixed effects from the optimization problem.^[The proposed pseudo-demeaning algorithm is in spirit of @gre04 and @cha80.] Its computational costs are lower by orders of magnitude if $N$ is reasonably large. 
+
+It is well known that as $N \rightarrow \infty$, the ML estimator is not consistent. This "incidental parameters problem" can be severe if $T$ is small. To tackle this problem, we provide an analytical bias correction for the structural parameters $\boldsymbol{\beta}$ and the average partial effects derived by @fer09.^[The bias-correction is an refinement of [@han04] that is also applicable to dynamic models.] Thus this package is well suited to analyse big micro-data where $N$ and/or $T$ are large.
+
+## Estimating a binary-choice model with individual effects
+
+In the following we utilize an example from labor economics to demonstrate the capabilities of `bife()`. More precisely, we use a balanced micro panel data set from the *Panel Study of Income Dynamics* to analyze the intertemporal labor force participation of 1,461 married women observed for nine years. A similar empirical illustration is used in @fer09 and is an adoption from @hys99.
+
+Before we start, we briefly inspect the data set to get an idea about its structure and potential covariates.
+```{r, eval = FALSE}
+data(psid, package = "bife")
+head(psid)
+```
+
+```{r, eval = FALSE}
+##    ID LFP KID1 KID2 KID3     INCH AGE TIME
+## 1:  1   1    1    1    1 58807.81  26    1
+## 2:  1   1    1    0    2 41741.87  27    2
+## 3:  1   1    0    1    2 51320.73  28    3
+## 4:  1   1    0    1    2 48958.58  29    4
+## 5:  1   1    0    1    2 53634.62  30    5
+## 6:  1   1    0    0    3 50983.13  31    6
+```
+
+`ID` and `TIME` are individual and time-specific identifiers, `LFP` is an indicator equal to one if a woman is in labor force, `KID1` - `KID3` are the number of children in a certain age group, `INCH` is the annual income of the husband, and `AGE` is the age of the woman.
+
+First, we use a specification similar to @fer09 and estimate a static model of women's labor supply where we control for unobserved individual heterogeneity (so called individual fixed effects).
+```{r, eval = FALSE}
+library(bife)
+stat <- bife(LFP ~ KID1 + KID2 + KID3 + log(INCH) + AGE + I(AGE^2) | ID, psid, "probit")
+summary(stat)
+```
+
+```{r, eval = FALSE}
+## binomial - probit link
+## 
+## LFP ~ KID1 + KID2 + KID3 + log(INCH) + AGE + I(AGE^2) | ID
+## 
+## Estimates:
+##             Estimate Std. error z value Pr(> |z|)    
+## KID1      -0.7144874  0.0562414 -12.704   < 2e-16 ***
+## KID2      -0.4114824  0.0515524  -7.982  1.44e-15 ***
+## KID3      -0.1298719  0.0415477  -3.126   0.00177 ** 
+## log(INCH) -0.2417756  0.0541720  -4.463  8.08e-06 ***
+## AGE        0.2319779  0.0375351   6.180  6.40e-10 ***
+## I(AGE^2)  -0.0028846  0.0004989  -5.781  7.41e-09 ***
+## ---
+## Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+## 
+## residual deviance= 6058.88,
+## null deviance= 8152.05,
+## nT= 5976, N= 664
+## 
+## ( 7173 observation(s) deleted due to perfect classification )
+## 
+## Number of Fisher Scoring Iterations: 6 
+## 
+## Average individual fixed effect= -1.121
+```
+As `glm()`, the summary statistic of the model provides detailed information about the coefficients and some information about the model fit (`residual deviance` and `null deviance`). Furthermore, we report statistics that are specific to fixed effects models. More precisely, we learn that only 5,976 observations out of 13,149 contribute to the idenfication of the structural parameters. This is indicated by the message that 7,173 observations are deleted due to perfect classification. With respect to binary choice models those are observations that are related to women who never change their labor force participation status during the nine years observed. Thus those women were either always employed or unemployed. Overall the estimation results are based on 664 women observed for nine years.
+
+Because coefficients itself are not very meaningful, econometricians are usually interested in so called partial effects (also known as marginal or ceteris paribus effects). A commonly used statistic is the average partial effect. `bife` offers a post-estimation routine to estimate average partial effects and their corresponding standard errors.
+```{r, eval = FALSE}
+apes_stat <- get_APEs(stat)
+summary(apes_stat)
+```
+
+```{r, eval = FALSE}
+## Estimates:
+##             Estimate Std. error z value Pr(> |z|)    
+## KID1      -0.0927845  0.0161225  -5.755  8.67e-09 ***
+## KID2      -0.0534358  0.0096773  -5.522  3.36e-08 ***
+## KID3      -0.0168654  0.0052808  -3.194   0.00140 ** 
+## log(INCH) -0.0313974  0.0109470  -2.868   0.00413 ** 
+## AGE        0.0301250  0.0212329   1.419   0.15596    
+## I(AGE^2)  -0.0003746  0.0099167  -0.038   0.96987    
+## ---
+## Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+```
+
+A widespread reason that prevents the use of non-linear fixed effects models in practice is the so-called incidental parameter bias problem (*IPP*) first mentioned by @ney48. Fortunately, for classical panel data sets, like in this example, there already exist several asymptotic bias-corrections tackling the *IPP* (see @fer18 for an overview). Our package provides a post-estimation routine that applies the analytical bias-correction derived by @fer09.
+```{r, eval = FALSE}
+stat_bc <- bias_corr(stat)
+summary(stat_bc)
+```
+
+```{r, eval = FALSE}
+## binomial - probit link
+## 
+## LFP ~ KID1 + KID2 + KID3 + log(INCH) + AGE + I(AGE^2) | ID
+## 
+## Estimates:
+##             Estimate Std. error z value Pr(> |z|)    
+## KID1      -0.6309003  0.0555075 -11.366   < 2e-16 ***
+## KID2      -0.3635502  0.0511328  -7.110  1.16e-12 ***
+## KID3      -0.1149806  0.0413488  -2.781   0.00542 ** 
+## log(INCH) -0.2139642  0.0536616  -3.987  6.68e-05 ***
+## AGE        0.2052755  0.0373054   5.503  3.74e-08 ***
+## I(AGE^2)  -0.0025520  0.0004962  -5.144  2.70e-07 ***
+## ---
+## Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+## 
+## residual deviance= 6058.88,
+## null deviance= 8152.05,
+## nT= 5976, N= 664
+## 
+## ( 7173 observation(s) deleted due to perfect classification )
+## 
+## Number of Fisher Scoring Iterations: 6 
+## 
+## Average individual fixed effect= -0.969
+```
+
+```{r, eval = FALSE}
+apes_stat_bc <- get_APEs(stat_bc)
+summary(apes_stat_bc)
+```
+
+```{r, eval = FALSE}
+## Estimates:
+##             Estimate Std. error z value Pr(> |z|)    
+## KID1      -0.1015555  0.0146046  -6.954  3.56e-12 ***
+## KID2      -0.0585204  0.0090041  -6.499  8.07e-11 ***
+## KID3      -0.0185083  0.0052532  -3.523  0.000426 ***
+## log(INCH) -0.0344416  0.0102247  -3.368  0.000756 ***
+## AGE        0.0330430  0.0186548   1.771  0.076513 .  
+## I(AGE^2)  -0.0004108  0.0086844  -0.047  0.962272    
+## ---
+## Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+```
+
+Whereas analytical bias-corrections for static models get more and more attention in applied work, it is not well known that they can also be used for dynamic models with fixed effects. 
+
+Before we can adjust our static to a dynamic specification, we first have to generate a lagged dependent variable.
+```{r, eval = FALSE}
+library(data.table)
+setDT(psid)
+psid[, LLFP := shift(LFP), by = ID]
+```
+
+Contrary to the bias-correction for the static models, we need to additionally provide a bandwidth parameter (`L`) that is required for the estimation of spectral densities (see @hah11). @fer18 suggest to do a sensitivity analysis and try different values for `L` but not larger than four.
+```{r, eval = FALSE}
+dyn <- bife(LFP ~ LLFP + KID1 + KID2 + KID3 + log(INCH) + AGE + I(AGE^2) | ID, psid, "probit")
+dyn_bc <- bias_corr(dyn, L = 1L)
+summary(dyn_bc)
+```
+
+```{r, eval = FALSE}
+## binomial - probit link
+## 
+## LFP ~ LLFP + KID1 + KID2 + KID3 + log(INCH) + AGE + I(AGE^2) | 
+##     ID
+## 
+## Estimates:
+##             Estimate Std. error z value Pr(> |z|)    
+## LLFP       1.0025730  0.0473072  21.193   < 2e-16 ***
+## KID1      -0.4741452  0.0679084  -6.982  2.91e-12 ***
+## KID2      -0.1958494  0.0625931  -3.129  0.001754 ** 
+## KID3      -0.0754092  0.0505115  -1.493  0.135461    
+## log(INCH) -0.1947087  0.0621154  -3.135  0.001721 ** 
+## AGE        0.2009782  0.0477735   4.207  2.59e-05 ***
+## I(AGE^2)  -0.0024145  0.0006293  -3.837  0.000125 ***
+## ---
+## Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+## 
+## residual deviance= 4774.57,
+## null deviance= 6549.14,
+## nT= 4792, N= 599
+## 
+## ( 1461 observation(s) deleted due to missingness )
+## ( 6896 observation(s) deleted due to perfect classification )
+## 
+## Number of Fisher Scoring Iterations: 6 
+## 
+## Average individual fixed effect= -1.939
+```
+
+```{r, eval = FALSE}
+apes_dyn_bc <- get_APEs(dyn_bc)
+summary(apes_dyn_bc)
+```
+
+```{r, eval = FALSE}
+## Estimates:
+##             Estimate Std. error z value Pr(> |z|)    
+## LLFP       0.1826348  0.0209169   8.731   < 2e-16 ***
+## KID1      -0.0752484  0.0114039  -6.598  4.15e-11 ***
+## KID2      -0.0310820  0.0074600  -4.166  3.09e-05 ***
+## KID3      -0.0119677  0.0053992  -2.217  0.026653 *  
+## log(INCH) -0.0309009  0.0091310  -3.384  0.000714 ***
+## AGE        0.0318959  0.0177688   1.795  0.072646 .  
+## I(AGE^2)  -0.0003832  0.0079898  -0.048  0.961749    
+## ---
+## Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+```
+
+## References

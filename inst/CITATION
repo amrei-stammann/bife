@@ -1,0 +1,13 @@
+citHeader("To cite 'bife' in publications use:")
+
+citEntry(entry        = "Unpublished",
+         title        = "Estimating Fixed Effects Logit Models with Large Panel Data",
+         author       = personList(as.person("Amrei Stammann"),
+                                   as.person("Florian Heiss"),
+                                   as.person("Daniel McFadden")),
+         year         = "2016",
+         note         = "Working paper",
+         textVersion  =  paste("Amrei Stammann, Florian Heiss, and Daniel McFadden (2016).",
+                               "Estimating Fixed Effects Logit Models with Large Panel Data.",
+                               "Working Paper.")
+)
