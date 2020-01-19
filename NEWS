@@ -1,3 +1,14 @@
+bife 0.7 (07.01.2020)
+
+[Major Changes]
+
+- Added a generic function `logLik()` that returns the sum of the log-likelihood.
+- 'X_new' in `predict()` now also permits data.frames.
+- `bife()` now permits to expand functions with `poly()` and `bs()`.
+- Added option 'sampling_fe' to `getAPEs()` to impose simplifying assumptions when estimating the covariance matrix.
+- Fixed an error in `get_APEs()` related to the estimation of the covariance.
+- Fixed a bug in the internal function that is used to estimate spectral densities.
+
 bife 0.6 (24.05.2019)
 
 [Major Changes]
