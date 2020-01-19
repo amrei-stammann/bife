@@ -4,10 +4,18 @@
 \alias{bife}
 \title{Efficiently fit binary choice models with fixed effects}
 \usage{
-bife(formula, data = list(), model = c("logit", "probit"),
-  beta_start = NULL, control = list(), bias_corr = NULL,
-  tol_demeaning = NULL, iter_demeaning = NULL, tol_offset = NULL,
-  iter_offset = NULL)
+bife(
+  formula,
+  data = list(),
+  model = c("logit", "probit"),
+  beta_start = NULL,
+  control = list(),
+  bias_corr = NULL,
+  tol_demeaning = NULL,
+  iter_demeaning = NULL,
+  tol_offset = NULL,
+  iter_offset = NULL
+)
 }
 \arguments{
 \item{formula}{an object of class \code{"formula"} (or one that can be coerced to that class): 

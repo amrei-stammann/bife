@@ -5,7 +5,12 @@
 \alias{apeff_bife}
 \title{Compute average partial effects for binary choice models with fixed effects}
 \usage{
-get_APEs(object, n_pop = NULL, weak_exo = FALSE)
+get_APEs(
+  object,
+  n_pop = NULL,
+  sampling_fe = c("independence", "unrestricted"),
+  weak_exo = FALSE
+)
 
 apeff_bife(...)
 }
@@ -19,6 +24,12 @@ Cruz-Gonzalez, Fernandez-Val, and Weidner (2017). The correction factor is compu
 where \eqn{n^{\ast}}{n.pop} and \eqn{n}{n} are the size of the entire 
 population and the full sample size. Default is \code{NULL}, which refers to a factor of one and 
 is equal to an infinitely large population.}
+
+\item{sampling_fe}{a string equal to \code{"independence"} or \code{"unrestricted"} which imposes 
+sampling assumptions about the unobserved effects. \code{"independence"} imposes that all 
+unobserved effects are mutually independent sequences. \code{"unrestricted"} does not impose any
+sampling assumptions. Note that this option only affects the estimation of the covariance. 
+Default is \code{"independence"}.}
 
 \item{weak_exo}{logical indicating if some of the regressors are assumed to be weakly exogenous (e.g. 
 predetermined). If object is returned by \code{\link{bias_corr}}, the option will be 

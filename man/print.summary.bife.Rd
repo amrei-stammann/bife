@@ -4,8 +4,7 @@
 \alias{print.summary.bife}
 \title{Print \code{summary.bife}}
 \usage{
-\method{print}{summary.bife}(x, digits = max(3L, getOption("digits") -
-  3L), ...)
+\method{print}{summary.bife}(x, digits = max(3L, getOption("digits") - 3L), ...)
 }
 \arguments{
 \item{x}{an object of class \code{"summary.bife"}.}

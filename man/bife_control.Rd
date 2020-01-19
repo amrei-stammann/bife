@@ -4,8 +4,13 @@
 \alias{bife_control}
 \title{Set \code{bife} Control Parameters}
 \usage{
-bife_control(dev_tol = 1e-08, rho_tol = 1e-04, conv_tol = 1e-06,
-  iter_max = 100L, trace = FALSE)
+bife_control(
+  dev_tol = 1e-08,
+  rho_tol = 1e-04,
+  conv_tol = 1e-06,
+  iter_max = 100L,
+  trace = FALSE
+)
 }
 \arguments{
 \item{dev_tol}{tolerance level for the first stopping condition of the maximization routine. The 

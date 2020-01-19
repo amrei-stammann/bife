@@ -4,8 +4,14 @@
 \alias{predict.bife}
 \title{Predict method for \code{bife} fits}
 \usage{
-\method{predict}{bife}(object, type = c("link", "response"),
-  X_new = NULL, alpha_new = NULL, corrected = NULL, ...)
+\method{predict}{bife}(
+  object,
+  type = c("link", "response"),
+  X_new = NULL,
+  alpha_new = NULL,
+  corrected = NULL,
+  ...
+)
 }
 \arguments{
 \item{object}{an object of class \code{"bife"}.}
@@ -13,8 +19,8 @@
 \item{type}{the type of prediction required. \code{"link"} is on the scale of the linear predictor
 whereas \code{"response"} is on the scale of the response variable. Default is \code{"link"}.}
 
-\item{X_new}{a regressor matrix for predictions. If not supplied predictions are based on the regressor
-matrix returned by the object \code{\link{bife}}. See \code{Details}.}
+\item{X_new}{a data.frame or a regressor matrix for predictions. If not supplied predictions are based 
+on the regressor matrix returned by the object \code{\link{bife}}. See \code{Details}.}
 
 \item{alpha_new}{a scalar or vector of fixed effects. If not supplied predictions are based on the
 vector of fixed effects returned by \code{\link{bife}}. See \code{Details}.}

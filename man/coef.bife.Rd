@@ -4,8 +4,7 @@
 \alias{coef.bife}
 \title{Extract estimates of structural parameters or fixed effects}
 \usage{
-\method{coef}{bife}(object, type = c("sp", "fe"), corrected = NULL,
-  fixed = NULL, ...)
+\method{coef}{bife}(object, type = c("sp", "fe"), corrected = NULL, fixed = NULL, ...)
 }
 \arguments{
 \item{object}{an object of class \code{"bife"}.}

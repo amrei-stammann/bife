@@ -4,8 +4,7 @@
 \alias{print.summary.bifeAPEs}
 \title{Print \code{summary.bifeAPEs}}
 \usage{
-\method{print}{summary.bifeAPEs}(x, digits = max(3L, getOption("digits")
-  - 3L), ...)
+\method{print}{summary.bifeAPEs}(x, digits = max(3L, getOption("digits") - 3L), ...)
 }
 \arguments{
 \item{x}{an object of class \code{"summary.bifeAPEs"}.}

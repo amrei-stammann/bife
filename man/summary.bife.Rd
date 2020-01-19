@@ -4,8 +4,7 @@
 \alias{summary.bife}
 \title{Summarizing models of class \code{bife}}
 \usage{
-\method{summary}{bife}(object, type = c("sp", "fe"), corrected = NULL,
-  fixed = NULL, ...)
+\method{summary}{bife}(object, type = c("sp", "fe"), corrected = NULL, fixed = NULL, ...)
 }
 \arguments{
 \item{object}{an object of class \code{"bife"}.}
