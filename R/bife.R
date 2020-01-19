@@ -54,9 +54,9 @@
 #' mod <- bife(LFP ~ I(AGE^2) + log(INCH) + KID1 + KID2 + KID3 + factor(TIME) | ID, dataset)
 #' summary(mod)
 #' }
-#' @importFrom data.table setDT first setattr setkeyv .N .SD :=
+#' @importFrom data.table setDT first setkeyv .N .SD :=
 #' @importFrom Formula Formula
-#' @importFrom stats binomial coef model.frame model.matrix pnorm printCoefmat terms vcov
+#' @importFrom stats binomial model.matrix na.omit pnorm printCoefmat terms vcov
 #' @importFrom Rcpp evalCpp
 #' @useDynLib bife, .registration = TRUE 
 #' @export
@@ -96,11 +96,13 @@ bife <- function(formula, data = list(), model = c("logit", "probit"),
   }
   
   # Generate model.frame
-  data <- suppressWarnings(model.frame(formula, data))
   setDT(data)
+  data <- data[, all.vars(formula), with = FALSE]
   lhs <- names(data)[[1L]]
   nobs_full <- nrow(data)
-  nobs_na <- length(attr(data, "na.action"))
+  data <- na.omit(data)
+  nobs_na <- nobs_full - nrow(data)
+  nobs_full <- nrow(data)
   
   # Ensure that model response is in line with the choosen model
   if (data[, is.numeric(get(lhs))]) {
@@ -126,12 +128,9 @@ bife <- function(formula, data = list(), model = c("logit", "probit"),
   setkeyv(data, idvar)
   
   # Drop observations that do not contribute to the loglikelihood
-  trms <- attr(data, "terms") # Store terms; required for model matrix
   tmpvar <- temp_var(data)
   data[, (tmpvar) := mean(get(lhs)), by = eval(idvar)]
   data <- data[get(tmpvar) > 0.0 & get(tmpvar) < 1.0]
-  setattr(data, "terms", trms)
-  rm(trms)
   
   # Transform fixed effects indicator to factor and generate auxiliary variables
   data[, (idvar) := lapply(.SD, check_factor), .SDcols = idvar]
@@ -148,7 +147,7 @@ bife <- function(formula, data = list(), model = c("logit", "probit"),
   y <- data[[1L]]
   X <- model.matrix(formula, data, rhs = 1L)[, - 1L, drop = FALSE]
   id <- as.integer(data[[idvar]])
-  nms_sp <- attr(X, "dimnames")[[2L]] # Saves memory
+  nms_sp <- attr(X, "dimnames")[[2L]]
   attr(X, "dimnames") <- NULL
 
   # Check for linear dependence in 'X'

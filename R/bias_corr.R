@@ -60,6 +60,11 @@ bias_corr <- function(object, L = 0L) {
     stop("'bias_corr' called on a non-'bife' object.", call. = FALSE)
   }
   
+  # Information in case of predetermined variables
+  if (L > 0L) {
+    message("Ensure that your data set is sorted by time!")
+  }
+  
   # Get names of the fixed effects variables and extract individual number of time periods
   idvar <- attr(terms(object[["formula"]], rhs = 2L), "term.labels")
   Ti <- object[["data"]][, .N, by = eval(idvar)][[2L]]
@@ -68,7 +73,7 @@ bias_corr <- function(object, L = 0L) {
   y <- object[["data"]][[1L]]
   X <- model.matrix(object[["formula"]], object[["data"]], rhs = 1L)[, - 1L, drop = FALSE]
   id <- as.integer(object[["data"]][[idvar]])
-  attr(X, "dimnames") <- NULL # Saves memory
+  attr(X, "dimnames") <- NULL
   
   # Compute required derivatives
   beta <- object[["coefficients"]]
@@ -87,7 +92,7 @@ bias_corr <- function(object, L = 0L) {
     z <- - eta * w
   }
   
-  # Bias-correction of Fernandez-Val (2009)
+  # Bias correction of Fernandez-Val (2009)
   MX <- center_variables(X * sqrt(w), sqrt(w), Ti) / sqrt(w)
   B <- as.vector(group_sums_bias(MX * z, w, Ti)) / 2.0
   if (L > 0L) {
@@ -100,7 +105,7 @@ bias_corr <- function(object, L = 0L) {
   eta <- as.vector(X %*% beta)
   alpha <- bife_offset(y, eta, id, Ti, family, object[["control"]])
   
-  # Recompute standard errors evaluated at corrected estimates
+  # Recompute weights
   eta <- eta + alpha[id]
   mu_eta <- family[["mu.eta"]](eta)
   if (family[["link"]] == "logit") {
@@ -112,11 +117,16 @@ bias_corr <- function(object, L = 0L) {
   # Recompute Hessian
   H <- crossprod(center_variables(X * sqrt(w), sqrt(w), Ti))
   
+  # Recompute deviance
+  mu <- family[["linkinv"]](eta)
+  dev <- sum(family[["dev.resids"]](y, mu, rep(1.0, length(y))))
+  
   # Add names and modify result list
   dimnames(H) <- list(names(beta), names(beta))
   names(alpha) <- names(object[["alpha"]])
   object[["coefficients"]] <- beta
   object[["alpha"]] <- alpha
+  object[["deviance"]] <- dev
   object[["Hessian"]] <- H
   object[["bandwidth"]] <- L
   

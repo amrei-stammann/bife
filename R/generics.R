@@ -87,6 +87,25 @@ fitted.bife <- function(object, ...) {
 
 
 #' @title
+#' Extract log-likelihood
+#' @description
+#' \code{\link{logLik.bife}} extracts the sum of the log-likelihood from an object 
+#' returned by \code{\link{bife}}.
+#' @param 
+#' object an object of class \code{"bife"}.
+#' @param 
+#' ... other arguments.
+#' @return
+#' The function \code{\link{logLik.bife}} returns the sum of the log-likelihood.
+#' @seealso
+#' \code{\link{bife}}
+#' @export
+logLik.bife <- function(object, ...) {
+  - object[["deviance"]] / 2.0
+}
+
+
+#' @title
 #' Predict method for \code{bife} fits
 #' @description
 #' \code{\link{predict.bife}} is a generic function which obtains predictions from an object 
@@ -97,8 +116,8 @@ fitted.bife <- function(object, ...) {
 #' type the type of prediction required. \code{"link"} is on the scale of the linear predictor
 #' whereas \code{"response"} is on the scale of the response variable. Default is \code{"link"}.
 #' @param 
-#' X_new a regressor matrix for predictions. If not supplied predictions are based on the regressor
-#' matrix returned by the object \code{\link{bife}}. See \code{Details}.
+#' X_new a data.frame or a regressor matrix for predictions. If not supplied predictions are based 
+#' on the regressor matrix returned by the object \code{\link{bife}}. See \code{Details}.
 #' @param 
 #' alpha_new a scalar or vector of fixed effects. If not supplied predictions are based on the
 #' vector of fixed effects returned by \code{\link{bife}}. See \code{Details}.
@@ -138,9 +157,13 @@ predict.bife <- function(object, type = c("link", "response"),
   if (is.null(X_new)) {
     X <- model.matrix(object[["formula"]], object[["data"]], rhs = 1L)[, - 1L, drop = FALSE]
   } else {
-    X <- as.matrix(X_new)
-    if (ncol(X) != length(beta)) {
-      stop("'X_new' of wrong dimension.", call. = FALSE)
+    if (inherits(X_new, "data.frame")) {
+      X <- model.matrix(object[["formula"]], X_new, rhs = 1L)[, - 1L, drop = FALSE]
+    } else if (inherits(X_new, "matrix")) {
+      X <- as.matrix(X_new)
+      if (ncol(X) != length(beta)) {
+        stop("'X_new' of wrong dimension.", call. = FALSE)
+      }
     }
   }
   x <- as.vector(X %*% beta)
@@ -395,7 +418,8 @@ vcov.bife <- function(object, ...) {
   # Check if the Hessian is invertible and compute its inverse
   R <- try(chol(object[["Hessian"]]), silent = TRUE)
   if (inherits(R, "try-error")) {
-    matrix(Inf, length(coef(object)), length(coef(object)))
+    p <- ncol(object[["Hessian"]])
+    matrix(Inf, p, p)
   } else {
     chol2inv(R)
   }

@@ -21,6 +21,12 @@
 #' population and the full sample size. Default is \code{NULL}, which refers to a factor of one and 
 #' is equal to an infinitely large population.
 #' @param
+#' sampling_fe a string equal to \code{"independence"} or \code{"unrestricted"} which imposes 
+#' sampling assumptions about the unobserved effects. \code{"independence"} imposes that all 
+#' unobserved effects are mutually independent sequences. \code{"unrestricted"} does not impose any
+#' sampling assumptions. Note that this option only affects the estimation of the covariance. 
+#' Default is \code{"independence"}.
+#' @param
 #' weak_exo logical indicating if some of the regressors are assumed to be weakly exogenous (e.g. 
 #' predetermined). If object is returned by \code{\link{bias_corr}}, the option will be 
 #' automatically set to \code{TRUE} if the choosen bandwidth parameter is larger than zero. 
@@ -70,10 +76,27 @@
 #' summary(mod_ape_bc)
 #' }
 #' @export
-get_APEs <- function(object, n_pop = NULL, weak_exo = FALSE) {
+get_APEs <- function(object,
+                     n_pop       = NULL,
+                     sampling_fe = c("independence", "unrestricted"),
+                     weak_exo    = FALSE) {
   # Validity of input argument (object)
   if (!inherits(object, "bife")) {
     stop("'get_APEs' called on a non-'bife' object.", call. = FALSE)
+  }
+  
+  # Check validity of 'sampling_fe'
+  sampling_fe <- match.arg(sampling_fe)
+  
+  # Extract prior information if available
+  biascorr <- !is.null(object[["bandwidth"]])
+  if (biascorr) {
+    L <- object[["bandwidth"]]
+    if (L > 0L) {
+      weak_exo <- TRUE
+    } else {
+      weak_exo <- FALSE
+    }
   }
   
   # Get names of the fixed effects variables and extract individual number of time periods
@@ -105,7 +128,7 @@ get_APEs <- function(object, n_pop = NULL, weak_exo = FALSE) {
   y <- object[["data"]][[1L]]
   X <- model.matrix(object[["formula"]], object[["data"]], rhs = 1L)[, - 1L, drop = FALSE]
   id <- as.integer(object[["data"]][[idvar]])
-  attr(X, "dimnames") <- NULL # Saves memory
+  attr(X, "dimnames") <- NULL
   
   # Determine which of the regressors are binary
   binary <- apply(X, 2L, function(x) all(x %in% c(0L, 1L)))
@@ -139,31 +162,23 @@ get_APEs <- function(object, n_pop = NULL, weak_exo = FALSE) {
       f1 <- family[["mu.eta"]](eta0 + beta[[i]])
       Delta[, i] <- family[["linkinv"]](eta0 + beta[[i]]) - family[["linkinv"]](eta0)
       Delta1[, i] <- f1 - family[["mu.eta"]](eta0)
-      J[i, ] <- - sum(PX[, i] * Delta1[, i])
+      J[i, ] <- - colSums(PX * Delta1[, i])
       J[i, i] <- sum(f1) + J[i, i]
-      J[i, - i] <- colSums(Delta1[, i] * X[, - i, drop = FALSE]) + J[i, - i]
+      J[i, - i] <- colSums(X[, - i, drop = FALSE] * Delta1[, i]) + J[i, - i]
       rm(eta0, f1)
     } else {
       Delta[, i] <- beta[[i]] * Delta[, i]
       Delta1[, i] <- beta[[i]] * Delta1[, i]
-      J[i, ] <- colSums((X - PX[, i]) * Delta1[, i])
+      J[i, ] <- colSums((X - PX) * Delta1[, i])
       J[i, i] <- sum(mu_eta) + J[i, i]
     }
   }
   delta <- colSums(Delta) / nt_full
   Delta <- t(t(Delta) - delta)
-  J <- J / nt_full
   rm(mu_eta)
   
   # Compute analytical bias-correction of average partial effects
-  if (!is.null(object[["bandwidth"]])) {
-    # Check validity of 'L' and 'weak_exo'
-    L <- object[["bandwidth"]]
-    if (L == 0L && weak_exo) {
-      warning("Inconsistent choice of 'weak_exo'; argument set to FALSE.", call. = FALSE)
-      weak_exo <- FALSE
-    }
-    
+  if (biascorr) {
     # Compute second-order partial derivatives
     Delta2 <- matrix(NA_real_, nt, p)
     Delta2[, !binary] <- partial_mu_eta(eta, family, 3L)
@@ -183,7 +198,6 @@ get_APEs <- function(object, n_pop = NULL, weak_exo = FALSE) {
     PPsi <- Delta1 / w - MPsi
     B <- as.vector(group_sums_bias(- PPsi * z + Delta2, w, Ti)) / 2.0
     if (L > 0L) {
-      weak_exo <- TRUE
       B <- B + as.vector(group_sums_spectral(MPsi * w, v, w, L, Ti))
     }
     delta <- delta - B / nt
@@ -198,11 +212,18 @@ get_APEs <- function(object, n_pop = NULL, weak_exo = FALSE) {
   rm(eta, mu, Delta1)
   
   # Compute standard errors
-  J <- J %*% solve(object[["Hessian"]] / nt)
-  Gamma <- t(tcrossprod(J, (X - PX) * v)) - PPsi * v
+  J <- J %*% solve(object[["Hessian"]])
+  Gamma <- tcrossprod((X - PX) * v, J) - PPsi * v
   V <- crossprod(Gamma)
   if (adj > 0.0) {
-    V <- V + adj * group_sums_var(Delta, Ti)
+    # Simplify covariance if sampling assumptions are imposed
+    if (sampling_fe == "independence") {
+      V <- V + adj * group_sums_var(Delta, Ti)
+    } else {
+      V <- V + adj * tcrossprod(colSums(Delta))
+    }
+    
+    # Add covariance in case of weak exogeneity
     if (weak_exo) {
       V <- V + adj * 2.0 * group_sums_cov(Delta, Gamma, Ti)
     }
@@ -214,7 +235,10 @@ get_APEs <- function(object, n_pop = NULL, weak_exo = FALSE) {
   dimnames(V) <- list(names(beta), names(beta))
   
   # Return result list
-  structure(list(delta = delta, vcov = V), class = "bifeAPEs")
+  structure(list(delta       = delta,
+                 vcov        = V,
+                 sampling_fe = sampling_fe,
+                 weak_exo    = weak_exo), class = "bifeAPEs")
 }
 
 

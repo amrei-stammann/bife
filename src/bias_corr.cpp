@@ -105,11 +105,9 @@ arma::vec group_sums_spectral(const arma::mat &kM,
     // Compute numerator
     arma::rowvec num(kp, arma::fill::zeros);
     for (int l = 1 ; l <= kL ; ++l) {
-      arma::rowvec num_l(kp, arma::fill::zeros);
       for (int t = l ; t < kT(i) ; ++t) {
-        num_l += kM.row(j + t) * kv(j + t - l);
+        num += kM.row(j + t) * kv(j + t - l) * kT(i) / (kT(i) - l);
       }
-      num += num_l * kT(i) / (kT(i) - l);
     }
     
     // Compute denominator
