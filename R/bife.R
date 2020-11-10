@@ -42,7 +42,7 @@
 #' @return
 #' The function \code{\link{bife}} returns a named list of class \code{"bife"}.
 #' @references
-#' Stammann, A., Heiss, F., and and McFadden, D. (2016). "Estimating Fixed Effects Logit Models with 
+#' Stammann, A., F. Heiss, and D. McFadden (2016). "Estimating Fixed Effects Logit Models with 
 #' Large Panel Data". Working paper.
 #' @examples 
 #' \donttest{
@@ -64,9 +64,9 @@ bife <- function(formula, data = list(), model = c("logit", "probit"),
                  beta_start = NULL, control = list(),
                  bias_corr = NULL, tol_demeaning = NULL, iter_demeaning = NULL,
                  tol_offset = NULL, iter_offset = NULL) {
-  # Notification that bias-corrections are now a post-estimation routine
+  # Notification that bias corrections are now a post-estimation routine
   if (!is.null(bias_corr)) {
-    warning("Bias-correction is transfered to the post-estimation routine 'bias_corr'.",
+    warning("Bias correction is transfered to the post-estimation routine 'bias_corr'.",
             call. = FALSE)
   }
   
@@ -197,25 +197,16 @@ bife <- function(formula, data = list(), model = c("logit", "probit"),
 #' @param
 #' dev_tol tolerance level for the first stopping condition of the maximization routine. The 
 #' stopping condition is based on the relative change of the deviance in iteration \eqn{r}
-#' and can be expressed as follows: \eqn{(dev_{r - 1} - dev_{r}) / (0.1 + dev_{r}) < 
-#' tol}{\Delta dev / (0.1 + dev) < tol}. Default is \code{1.0e-08}.
-#' @param
-#' rho_tol tolerance level for the stephalving in the maximization routine. Stephalving only takes
-#' place if the deviance in iteration \eqn{r} is larger than the one of the previous iteration. If 
-#' this is the case, 
-#' \eqn{||\boldsymbol{\beta}_{r} - \boldsymbol{\beta}_{r - 1}||_{2}}{||\Delta \beta||} is 
-#' halfed until the deviance is less or numerically equal compared to the deviance of the previous
-#' iteration. Stephalving fails if the the following condition holds: \eqn{\rho < tol}{\rho < tol}, 
-#' where \eqn{\rho}{\rho} is the stepcorrection factor. If stephalving fails the maximization
-#' routine is canceled. Default is \code{1.0e-04}.
-#' @param
-#' conv_tol tolerance level that accounts for rounding errors inside the stephalving routine when
-#' comparing the deviance with the one of the previous iteration. Default is \code{1.0e-06}.
+#' and can be expressed as follows: 
+#' \eqn{|dev_{r} - dev_{r - 1}| / (0.1 + |dev_{r}|) < tol}{|dev - devold| / (0.1 + |dev|) < tol}.
+#' Default is \code{1.0e-08}.
 #' @param
 #' iter_max unsigned integer indicating the maximum number of iterations in the maximization
-#' routine. Default is \code{100L}.
+#' routine. Default is \code{25L}.
 #' @param
 #' trace logical indicating if output should be produced in each iteration. Default is \code{FALSE}.
+#' @param
+#' conv_tol,rho_tol deprecated; step-halving is now similar to \code{glm.fit2}.
 #' @return
 #' The function \code{\link{bife_control}} returns a named list of control 
 #' parameters.
@@ -223,13 +214,13 @@ bife <- function(formula, data = list(), model = c("logit", "probit"),
 #' \code{\link{bife}}
 #' @export
 bife_control <- function(dev_tol        = 1.0e-08,
-                         rho_tol        = 1.0e-04,
-                         conv_tol       = 1.0e-06,
-                         iter_max       = 100L,
-                         trace          = FALSE) {
+                         iter_max       = 25L,
+                         trace          = FALSE,
+                         rho_tol        = NULL,
+                         conv_tol       = NULL) {
   # Check validity of tolerance parameters
-  if (dev_tol <= 0.0 || rho_tol <= 0.0 || conv_tol <= 0.0) {
-    stop("All tolerance paramerters should be greater than zero.", call. = FALSE)
+  if (dev_tol <= 0.0) {
+    stop("Tolerance paramerter should be greater than zero.", call. = FALSE)
   }
   
   # Check validity of 'iter_max'
@@ -240,8 +231,6 @@ bife_control <- function(dev_tol        = 1.0e-08,
   
   # Return list with control parameters
   list(dev_tol  = dev_tol,
-       rho_tol  = rho_tol,
-       conv_tol = conv_tol,
        iter_max = iter_max,
        trace    = as.logical(trace))
 }
@@ -252,6 +241,12 @@ bife_control <- function(dev_tol        = 1.0e-08,
 
 # Fitting function
 bife_fit <- function(beta, alpha, y, X, id, Ti, family, control) {
+  # Extract control arguments
+  dev_tol <- control[["dev_tol"]]
+  epsilon <- min(1.0e-07, dev_tol / 1000.0)
+  iter_max <- control[["iter_max"]]
+  trace <- control[["trace"]]
+  
   # Compute initial quantities for the maximization routine
   eta <- as.vector(X %*% beta + alpha[id])
   mu <- family[["linkinv"]](eta)
@@ -260,7 +255,7 @@ bife_fit <- function(beta, alpha, y, X, id, Ti, family, control) {
   
   # Start maximization of the log-likelihood
   conv <- FALSE
-  for (iter in seq.int(control[["iter_max"]])) {
+  for (iter in seq.int(iter_max)) {
     # Compute weights and dependent variable
     mu_eta <- family[["mu.eta"]](eta)
     w_tilde <- sqrt(mu_eta^2 / family[["variance"]](mu))
@@ -270,20 +265,20 @@ bife_fit <- function(beta, alpha, y, X, id, Ti, family, control) {
     MX <- center_variables(X * w_tilde, w_tilde, Ti)
     
     # Compute update steps
-    beta_upd <- qr.solve(MX, nu * w_tilde)
+    beta_upd <- qr.solve(MX, nu * w_tilde, epsilon)
     alpha_upd <- as.vector(update_alpha(as.vector(nu - X %*% beta_upd) * w_tilde, w_tilde, Ti))
     
     # Step-halving based on residual deviance as common in glm's
     dev_old <- dev
     rho <- 1.0
-    repeat {
+    for (inner_iter in seq.int(iter_max)) {
       # Compute residual deviance
       eta <- as.vector(X %*% (beta + rho * beta_upd) + (alpha + rho * alpha_upd)[id])
       mu <- family[["linkinv"]](eta)
       dev <- sum(family[["dev.resids"]](y, mu, wt))
       
       # Check if deviance is not increasing
-      if (is.finite(dev) && dev <= dev_old + control[["conv_tol"]] * dev) {
+      if (is.finite(dev) && (dev - dev_old) / (0.1 + abs(dev)) <= - dev_tol) {
         # Update \beta and \alpha
         beta <- beta + rho * beta_upd
         alpha <- alpha + rho * alpha_upd
@@ -292,21 +287,18 @@ bife_fit <- function(beta, alpha, y, X, id, Ti, family, control) {
       
       # Update \rho
       rho <- rho / 2.0
-      
-      # If \rho is to small throw error
-      if (rho < control[["rho_tol"]]) {
-        stop("Failure in step-halving.", call. = FALSE)
-      }
     }
     
     # Progress information
-    if (control[["trace"]]) {
-      cat("Deviance=", dev, "- Iteration=", iter, "\n")
+    if (trace) {
+      cat("Iteration=", iter, "\n")
+      cat("Deviance=", format(dev, digits = 5L, nsmall = 2L), "\n")
+      cat("Estimates=", format(beta, digits = 3L, nsmall = 2L), "\n")
     }
     
     # Check termination condition
-    if ((dev_old - dev) / (0.1 + dev) < control[["dev_tol"]]) {
-      if (control[["trace"]]) {
+    if (abs(dev - dev_old) / (0.1 + abs(dev)) < dev_tol) {
+      if (trace) {
         cat("Convergence\n")
       }
       conv <- TRUE
@@ -338,6 +330,10 @@ bife_fit <- function(beta, alpha, y, X, id, Ti, family, control) {
 
 # Offset function
 bife_offset <- function(y, xb, id, Ti, family, control) {
+  # Extract control arguments
+  dev_tol <- control[["dev_tol"]]
+  iter_max <- control[["iter_max"]]
+  
   # Compute initial quantities for the maximization routine
   alpha <- family[["linkfun"]]((as.vector(tapply(y, id, mean)) + 0.5) / 2.0)
   eta <- alpha[id]
@@ -347,7 +343,7 @@ bife_offset <- function(y, xb, id, Ti, family, control) {
   dev <- sum(family[["dev.resids"]](y, mu, wt))
   
   # Start maximization of the log-likelihood
-  for (iter in seq.int(control[["iter_max"]])) {
+  for (iter in seq.int(iter_max)) {
     # Compute weights and dependent variable
     mu_eta <- family[["mu.eta"]](eta)
     w_tilde <- sqrt(mu_eta^2 / family[["variance"]](mu))
@@ -359,14 +355,14 @@ bife_offset <- function(y, xb, id, Ti, family, control) {
     # Step-halving based on residual deviance as common in glm's
     dev_old <- dev
     rho <- 1.0
-    repeat {
+    for (inner_iter in seq.int(iter_max)) {
       # Compute residual deviance
       eta <- as.vector(xb + (alpha + rho * alpha_upd)[id])
       mu <- family[["linkinv"]](eta)
       dev <- sum(family[["dev.resids"]](y, mu, wt))
       
       # Check if deviance is not increasing
-      if (is.finite(dev) && dev <= dev_old + control[["conv_tol"]] * dev) {
+      if (is.finite(dev) && (dev - dev_old) / (0.1 + abs(dev)) <= - dev_tol) {
         # Update \alpha and leave step-halving
         alpha <- alpha + rho * alpha_upd
         break
@@ -374,15 +370,10 @@ bife_offset <- function(y, xb, id, Ti, family, control) {
       
       # Update \rho
       rho <- rho / 2.0
-      
-      # If \rho is to small throw error
-      if (rho < control[["rho_tol"]]) {
-        stop("Failure in step-halving.", call. = FALSE)
-      }
     }
     
     # Check termination condition
-    if ((dev_old - dev) / (0.1 + dev) < control[["dev_tol"]]) {
+    if (abs(dev - dev_old) / (0.1 + abs(dev)) < dev_tol) {
       break
     }
   }

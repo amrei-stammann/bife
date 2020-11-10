@@ -6,34 +6,25 @@
 \usage{
 bife_control(
   dev_tol = 1e-08,
-  rho_tol = 1e-04,
-  conv_tol = 1e-06,
-  iter_max = 100L,
-  trace = FALSE
+  iter_max = 25L,
+  trace = FALSE,
+  rho_tol = NULL,
+  conv_tol = NULL
 )
 }
 \arguments{
 \item{dev_tol}{tolerance level for the first stopping condition of the maximization routine. The 
 stopping condition is based on the relative change of the deviance in iteration \eqn{r}
-and can be expressed as follows: \eqn{(dev_{r - 1} - dev_{r}) / (0.1 + dev_{r}) < 
-tol}{\Delta dev / (0.1 + dev) < tol}. Default is \code{1.0e-08}.}
-
-\item{rho_tol}{tolerance level for the stephalving in the maximization routine. Stephalving only takes
-place if the deviance in iteration \eqn{r} is larger than the one of the previous iteration. If 
-this is the case, 
-\eqn{||\boldsymbol{\beta}_{r} - \boldsymbol{\beta}_{r - 1}||_{2}}{||\Delta \beta||} is 
-halfed until the deviance is less or numerically equal compared to the deviance of the previous
-iteration. Stephalving fails if the the following condition holds: \eqn{\rho < tol}{\rho < tol}, 
-where \eqn{\rho}{\rho} is the stepcorrection factor. If stephalving fails the maximization
-routine is canceled. Default is \code{1.0e-04}.}
-
-\item{conv_tol}{tolerance level that accounts for rounding errors inside the stephalving routine when
-comparing the deviance with the one of the previous iteration. Default is \code{1.0e-06}.}
+and can be expressed as follows: 
+\eqn{|dev_{r} - dev_{r - 1}| / (0.1 + |dev_{r}|) < tol}{|dev - devold| / (0.1 + |dev|) < tol}.
+Default is \code{1.0e-08}.}
 
 \item{iter_max}{unsigned integer indicating the maximum number of iterations in the maximization
-routine. Default is \code{100L}.}
+routine. Default is \code{25L}.}
 
 \item{trace}{logical indicating if output should be produced in each iteration. Default is \code{FALSE}.}
+
+\item{conv_tol, rho_tol}{deprecated; step-halving is now similar to \code{glm.fit2}.}
 }
 \value{
 The function \code{\link{bife_control}} returns a named list of control 

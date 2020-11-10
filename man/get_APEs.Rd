@@ -19,7 +19,7 @@ apeff_bife(...)
 
 \item{n_pop}{unsigned integer indicating a finite population correction for the estimation of the 
 covariance matrix of the average partial effects proposed by 
-Cruz-Gonzalez, Fernandez-Val, and Weidner (2017). The correction factor is computed as follows: 
+Cruz-Gonzalez, Fernández-Val, and Weidner (2017). The correction factor is computed as follows: 
 \eqn{(n^{\ast} - n) / (n^{\ast} - 1)}{(n.pop - n) / (n.pop - 1)}, 
 where \eqn{n^{\ast}}{n.pop} and \eqn{n}{n} are the size of the entire 
 population and the full sample size. Default is \code{NULL}, which refers to a factor of one and 
@@ -67,7 +67,7 @@ summary(mod)
 mod_ape <- get_APEs(mod)
 summary(mod_ape)
 
-# Apply analytical bias-correction
+# Apply analytical bias correction
 mod_bc <- bias_corr(mod)
 summary(mod_bc)
 
@@ -77,19 +77,19 @@ summary(mod_ape_bc)
 }
 }
 \references{
-Cruz-Gonzalez, M., Fernandez-Val, I., and Weidner, M. (2017). "Bias corrections for probit and 
+Cruz-Gonzalez, M., I. Fernández-Val, and M. Weidner. (2017). "Bias corrections for probit and 
 logit models with two-way fixed effects". The Stata Journal, 17(3), 517-545.
 
-Fernandez-Val, I. (2009). "Fixed effects estimation of structural parameters and marginal 
+Fernández-Val, I. (2009). "Fixed effects estimation of structural parameters and marginal 
 effects in panel probit models". Journal of Econometrics 150(1), 71-85.
 
-Fernandez-Val, I. and Weidner M. (2018). "Fixed effects estimation of large-t panel data models". 
+Fernández-Val, I. and M. Weidner (2018). "Fixed effects estimation of large-t panel data models". 
 Annual Review of Economics, 10, 109-138.
 
-Neyman, J. and Scott, E. L. (1948). "Consistent estimates based on partially consistent 
+Neyman, J. and E. L. Scott (1948). "Consistent estimates based on partially consistent 
 observations". Econometrica, 16(1), 1-32.
 
-Stammann, A., Heiss, F., and and McFadden, D. (2016). "Estimating Fixed Effects Logit Models with 
+Stammann, A., F. Heiss, and D. McFadden (2016). "Estimating Fixed Effects Logit Models with 
 Large Panel Data". Working paper.
 }
 \seealso{

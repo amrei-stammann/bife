@@ -4,7 +4,8 @@
 \name{psid}
 \alias{psid}
 \title{Female labor force participation}
-\format{A data frame with 13,149 rows:
+\format{
+A data frame with 13,149 rows:
 \describe{
   \item{ID}{individual identifier}
   \item{LFP}{labor force participation}
@@ -13,7 +14,8 @@
   \item{KID3}{# of kids aged between 6 and 17}
   \item{INCH}{income husband}
   \item{AGE}{age of woman}
-  \item{TIME}{time identifier}}}
+  \item{TIME}{time identifier}}
+}
 \usage{
 psid
 }

@@ -15,7 +15,7 @@
 #' @param
 #' n_pop unsigned integer indicating a finite population correction for the estimation of the 
 #' covariance matrix of the average partial effects proposed by 
-#' Cruz-Gonzalez, Fernandez-Val, and Weidner (2017). The correction factor is computed as follows: 
+#' Cruz-Gonzalez, Fernández-Val, and Weidner (2017). The correction factor is computed as follows: 
 #' \eqn{(n^{\ast} - n) / (n^{\ast} - 1)}{(n.pop - n) / (n.pop - 1)}, 
 #' where \eqn{n^{\ast}}{n.pop} and \eqn{n}{n} are the size of the entire 
 #' population and the full sample size. Default is \code{NULL}, which refers to a factor of one and 
@@ -37,19 +37,19 @@
 #' @return
 #' The function \code{\link{get_APEs}} returns a named list of class \code{"bifeAPEs"}.
 #' @references
-#' Cruz-Gonzalez, M., Fernandez-Val, I., and Weidner, M. (2017). "Bias corrections for probit and 
+#' Cruz-Gonzalez, M., I. Fernández-Val, and M. Weidner. (2017). "Bias corrections for probit and 
 #' logit models with two-way fixed effects". The Stata Journal, 17(3), 517-545.
 #' @references
-#' Fernandez-Val, I. (2009). "Fixed effects estimation of structural parameters and marginal 
+#' Fernández-Val, I. (2009). "Fixed effects estimation of structural parameters and marginal 
 #' effects in panel probit models". Journal of Econometrics 150(1), 71-85.
 #' @references
-#' Fernandez-Val, I. and Weidner M. (2018). "Fixed effects estimation of large-t panel data models". 
+#' Fernández-Val, I. and M. Weidner (2018). "Fixed effects estimation of large-t panel data models". 
 #' Annual Review of Economics, 10, 109-138.
 #' @references
-#' Neyman, J. and Scott, E. L. (1948). "Consistent estimates based on partially consistent 
+#' Neyman, J. and E. L. Scott (1948). "Consistent estimates based on partially consistent 
 #' observations". Econometrica, 16(1), 1-32.
 #' @references
-#' Stammann, A., Heiss, F., and and McFadden, D. (2016). "Estimating Fixed Effects Logit Models with 
+#' Stammann, A., F. Heiss, and D. McFadden (2016). "Estimating Fixed Effects Logit Models with 
 #' Large Panel Data". Working paper.
 #' @seealso
 #' \code{\link{bias_corr}}, \code{\link{bife}}
@@ -67,7 +67,7 @@
 #' mod_ape <- get_APEs(mod)
 #' summary(mod_ape)
 #' 
-#' # Apply analytical bias-correction
+#' # Apply analytical bias correction
 #' mod_bc <- bias_corr(mod)
 #' summary(mod_bc)
 #' 
@@ -177,7 +177,13 @@ get_APEs <- function(object,
   Delta <- t(t(Delta) - delta)
   rm(mu_eta)
   
-  # Compute analytical bias-correction of average partial effects
+  # Compute projection of \Psi
+  Psi <- - Delta1 / w
+  MPsi <- center_variables(Psi * sqrt(w), sqrt(w), Ti) / sqrt(w)
+  PPsi <- Psi - MPsi
+  rm(Delta1, Psi)
+  
+  # Compute analytical bias correction of average partial effects
   if (biascorr) {
     # Compute second-order partial derivatives
     Delta2 <- matrix(NA_real_, nt, p)
@@ -193,23 +199,15 @@ get_APEs <- function(object,
       }
     }
     
-    # Compute corrected average partial effect using the bias-correction of Fernandez-Val (2009)
-    MPsi <- center_variables(Delta1 / sqrt(w), sqrt(w), Ti) / sqrt(w)
-    PPsi <- Delta1 / w - MPsi
-    B <- as.vector(group_sums_bias(- PPsi * z + Delta2, w, Ti)) / 2.0
-    if (L > 0L) {
-      B <- B + as.vector(group_sums_spectral(MPsi * w, v, w, L, Ti))
-    }
-    delta <- delta - B / nt
-    rm(MPsi)
-    
-    # Compute bias-corrected average partial effect
+    # Compute corrected average partial effect using the bias correction of Fernández-Val (2009)
+    B <- as.vector(group_sums_bias(PPsi * z + Delta2, w, Ti)) / 2.0
     rm(Delta2)
-  } else {
-    # Compute projection of \Psi
-    PPsi <- Delta1 / w - center_variables(Delta1 / sqrt(w), sqrt(w), Ti) / sqrt(w)
+    if (L > 0L) {
+      B <- B - as.vector(group_sums_spectral(MPsi * w, v, w, L, Ti))
+    }
+    delta <- delta - B / nt_full
   }
-  rm(eta, mu, Delta1)
+  rm(eta, mu, MPsi)
   
   # Compute standard errors
   J <- J %*% solve(object[["Hessian"]])
@@ -228,7 +226,7 @@ get_APEs <- function(object,
       V <- V + adj * 2.0 * group_sums_cov(Delta, Gamma, Ti)
     }
   }
-  V <- V / nt^2
+  V <- V / nt_full^2
   
   # Add names
   names(delta) <- names(beta)
@@ -238,7 +236,8 @@ get_APEs <- function(object,
   structure(list(delta       = delta,
                  vcov        = V,
                  sampling_fe = sampling_fe,
-                 weak_exo    = weak_exo), class = "bifeAPEs")
+                 weak_exo    = weak_exo),
+            class = "bifeAPEs")
 }
 
 

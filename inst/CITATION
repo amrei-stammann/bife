@@ -1,13 +1,32 @@
-citHeader("To cite 'bife' in publications use:")
+bibentry(
+  bibtype     = "Article",
+  title       = "Estimating Fixed Effects Logit Models with Large Panel Data",
+  author      = as.person(c("Amrei Stammann", "Florian Heiss", "Daniel McFadden")),
+  journal     = "Working Paper",
+  year        = "2016",
+  header      = "To cite bife in publications use:",
+  textVersion = paste(
+    "Stammann, Amrei, Florian Heiss, and Daniel McFadden (2016).",
+    "Estimating Fixed Effects Logit Models with Large Panel Data.",
+    "Working Paper."
+    ),
+  encoding    = "UTF-8"
+)
 
-citEntry(entry        = "Unpublished",
-         title        = "Estimating Fixed Effects Logit Models with Large Panel Data",
-         author       = personList(as.person("Amrei Stammann"),
-                                   as.person("Florian Heiss"),
-                                   as.person("Daniel McFadden")),
-         year         = "2016",
-         note         = "Working paper",
-         textVersion  =  paste("Amrei Stammann, Florian Heiss, and Daniel McFadden (2016).",
-                               "Estimating Fixed Effects Logit Models with Large Panel Data.",
-                               "Working Paper.")
+bibentry(
+  bibtype     = "Article",
+  title       = "Fixed effects estimation of structural parameters and marginal effects in panel probit models",
+  author      = as.person("Iván Fernández-Val"),
+  journal     = "Journal of Econometrics",
+  volume      = "150",
+  number      = "1",
+  pages       = "71--85",
+  year        = "2009",
+  header      = "To cite the bias correction of Fernández-Val:",
+  textVersion = paste(
+    "Fernández-Val, Iván (2009).",
+    "Fixed effects estimation of structural parameters and marginal effects in panel probit models.",
+    "Journal of Econometrics 150(1), 71-85."
+    ),
+  encoding    = "UTF-8"
 )

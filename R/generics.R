@@ -120,7 +120,7 @@ logLik.bife <- function(object, ...) {
 #' on the regressor matrix returned by the object \code{\link{bife}}. See \code{Details}.
 #' @param 
 #' alpha_new a scalar or vector of fixed effects. If not supplied predictions are based on the
-#' vector of fixed effects returned by \code{\link{bife}}. See \code{Details}.
+#' vector of fixed effects returned by \code{\link{bife}} or the average. See \code{Details}.
 #' @param 
 #' corrected deprecated.
 #' @param 
@@ -134,7 +134,8 @@ logLik.bife <- function(object, ...) {
 #' 
 #' If \code{alpha_new} is supplied as a scalar the linear predictor is computed using the same 
 #' value of the fixed effect for each observation. If \code{alpha_new} is supplied as a vector it 
-#' has to be of same length as the rows of the corresponding regressor matrix.
+#' has to be of same length as the rows of the corresponding regressor matrix. If only \code{X_new}
+#' is provided but not \code{alpha_new}, we use the average.
 #' @return
 #' The function \code{predict.bife} returns a vector of predictions.
 #' @seealso

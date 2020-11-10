@@ -74,6 +74,6 @@ summary(mod)
 }
 }
 \references{
-Stammann, A., Heiss, F., and and McFadden, D. (2016). "Estimating Fixed Effects Logit Models with 
+Stammann, A., F. Heiss, and D. McFadden (2016). "Estimating Fixed Effects Logit Models with 
 Large Panel Data". Working paper.
 }

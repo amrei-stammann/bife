@@ -2,7 +2,7 @@
 % Please edit documentation in R/bias_corr.R
 \name{bias_corr}
 \alias{bias_corr}
-\title{Asymptotic bias-correction for binary choice Models with fixed effects}
+\title{Asymptotic bias correction for binary choice Models with fixed effects}
 \usage{
 bias_corr(object, L = 0L)
 }
@@ -12,7 +12,7 @@ bias_corr(object, L = 0L)
 \item{L}{unsigned integer indicating a bandwidth for the estimation of spectral densities proposed by 
 Hahn and Kuersteiner (2011). Default is zero, which should be used if all regressors are 
 assumed to be strictly exogenous. In the presence of weakly exogenous or predetermined 
-regressors, Fernandez-Val and Weidner (2018) suggest to choose a bandwidth not higher than 
+regressors, Fernández-Val and Weidner (2018) suggest to choose a bandwidth not higher than 
 four.}
 }
 \value{
@@ -21,11 +21,11 @@ The function \code{\link{bias_corr}} returns a named list of class \code{"bife"}
 \description{
 \code{\link{bias_corr}} is a post-estimation routine that can be used to substantially reduce the 
 incidental parameter bias problem (Neyman and Scott (1948)) present in non-linear fixed effects 
-models (see Fernandez-Val and Weidner (2018) for an overview). The command applies the analytical 
-bias-correction derived by Fernandez-Val (2009) to obtain bias-corrected estimates of 
+models (see Fernández-Val and Weidner (2018) for an overview). The command applies the analytical 
+bias correction derived by Fernández-Val (2009) to obtain bias-corrected estimates of 
 the structural parameters.
 
-\strong{Remark:} Fernandez-Val (2009) further refined the bias-correction of 
+\strong{Remark:} Fernández-Val (2009) further refined the bias correction of 
 Hahn and Newey (2004). The correction is now also applicable to dynamic models.
 }
 \examples{
@@ -38,28 +38,28 @@ dataset <- psid
 mod <- bife(LFP ~ I(AGE^2) + log(INCH) + KID1 + KID2 + KID3 + factor(TIME) | ID, dataset)
 summary(mod)
 
-# Apply analytical bias-correction
+# Apply analytical bias correction
 mod_bc <- bias_corr(mod)
 summary(mod_bc)
 }
 }
 \references{
-Fernandez-Val, I. (2009). "Fixed effects estimation of structural parameters and marginal 
+Fernández-Val, I. (2009). "Fixed effects estimation of structural parameters and marginal 
 effects in panel probit models". Journal of Econometrics 150(1), 71-85.
 
-Fernandez-Val, I. and Weidner, M. (2018). "Fixed effects estimation of large-t panel data 
+Fernández-Val, I. and M. Weidner (2018). "Fixed effects estimation of large-t panel data 
 models". Annual Review of Economics, 10, 109-138.
 
-Hahn, J. and Kuersteiner, G. (2011). "Bias reduction for dynamic nonlinear panel models with 
+Hahn, J. and G. Kuersteiner (2011). "Bias reduction for dynamic nonlinear panel models with 
 fixed effects". Econometric Theory, 27(6), 1152-1191.
 
-Hahn, J. and Newey, W. (2004). "Jackknife and analytical bias reduction for nonlinear panel 
+Hahn, J. and W. Newey (2004). "Jackknife and analytical bias reduction for nonlinear panel 
 models". Econometrica 72(4), 1295-1319.
 
-Neyman, J. and Scott, E. L. (1948). "Consistent estimates based on partially consistent 
+Neyman, J. and E. L. Scott (1948). "Consistent estimates based on partially consistent 
 observations". Econometrica, 16(1), 1-32.
 
-Stammann, A., Heiss, F., and and McFadden, D. (2016). "Estimating Fixed Effects Logit Models with 
+Stammann, A., F. Heiss, and D. McFadden (2016). "Estimating Fixed Effects Logit Models with 
 Large Panel Data". Working paper.
 }
 \seealso{

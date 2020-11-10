@@ -1,3 +1,14 @@
+bife 0.7.1 (25.10.2020)
+
+[Major Changes]
+- Step-halving is now similar to `glm.fit2()`.
+- Fixed an error in the covariance (influence function) of `get_APEs()`.
+
+[Minor Changes]
+- Added reference for the bias correction in `citation()`
+- Updated some references in the documentation and vignette.
+- Fixed some typos in the documentation and vignette.
+
 bife 0.7 (07.01.2020)
 
 [Major Changes]
