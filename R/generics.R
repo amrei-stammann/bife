@@ -261,7 +261,7 @@ print.summary.bife <- function(x, digits = max(3L, getOption("digits") - 3L), ..
   printCoefmat(x[["cm"]], P.values = TRUE, has.Pvalue = TRUE, digits = digits)
   cat("\nresidual deviance= ", round(x[["deviance"]], 2L), ",\n", sep = "")
   cat("null deviance= ", round(x[["null_deviance"]], 2L), ",\n", sep = "")
-  cat("nT= ", x[["nobs"]][["nobs"]], ", N= ", x[["levels"]], "\n", sep = "")
+  cat("n= ", x[["nobs"]][["nobs"]], ", N= ", x[["levels"]], "\n", sep = "")
   if (x[["nobs"]][["nobs_na"]] > 0L | x[["nobs"]][["nobs_pc"]] > 0L) {
     cat("\n")
     if (x[["nobs"]][["nobs_na"]] > 0L) {

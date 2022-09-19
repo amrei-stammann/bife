@@ -60,10 +60,18 @@
 #' @importFrom Rcpp evalCpp
 #' @useDynLib bife, .registration = TRUE 
 #' @export
-bife <- function(formula, data = list(), model = c("logit", "probit"),
-                 beta_start = NULL, control = list(),
-                 bias_corr = NULL, tol_demeaning = NULL, iter_demeaning = NULL,
-                 tol_offset = NULL, iter_offset = NULL) {
+bife <- function(
+    formula,
+    data           = list(),
+    model          = c("logit", "probit"),
+    beta_start     = NULL,
+    control        = list(),
+    bias_corr      = NULL,
+    tol_demeaning  = NULL,
+    iter_demeaning = NULL,
+    tol_offset     = NULL,
+    iter_offset    = NULL
+    ) {
   # Notification that bias corrections are now a post-estimation routine
   if (!is.null(bias_corr)) {
     warning("Bias correction is transfered to the post-estimation routine 'bias_corr'.",
@@ -182,11 +190,15 @@ bife <- function(formula, data = list(), model = c("logit", "probit"),
   dimnames(fit[["Hessian"]]) <- list(nms_sp, nms_sp)
   
   # Return result list
-  structure(c(fit, list(nobs     = nobs,
-                        formula  = formula,
-                        data     = data,
-                        family   = family,
-                        control  = control)), class = "bife")
+  structure(c(
+    fit, list(
+      nobs     = nobs,
+      formula  = formula,
+      data     = data,
+      family   = family,
+      control  = control
+      )
+    ), class = "bife")
 }
 
 
@@ -213,11 +225,13 @@ bife <- function(formula, data = list(), model = c("logit", "probit"),
 #' @seealso
 #' \code{\link{bife}}
 #' @export
-bife_control <- function(dev_tol        = 1.0e-08,
-                         iter_max       = 25L,
-                         trace          = FALSE,
-                         rho_tol        = NULL,
-                         conv_tol       = NULL) {
+bife_control <- function(
+    dev_tol        = 1.0e-08,
+    iter_max       = 25L,
+    trace          = FALSE,
+    rho_tol        = NULL,
+    conv_tol       = NULL
+    ) {
   # Check validity of tolerance parameters
   if (dev_tol <= 0.0) {
     stop("Tolerance paramerter should be greater than zero.", call. = FALSE)
@@ -230,9 +244,11 @@ bife_control <- function(dev_tol        = 1.0e-08,
   }
   
   # Return list with control parameters
-  list(dev_tol  = dev_tol,
-       iter_max = iter_max,
-       trace    = as.logical(trace))
+  list(
+    dev_tol  = dev_tol,
+    iter_max = iter_max,
+    trace    = as.logical(trace)
+    )
 }
 
 
@@ -248,7 +264,7 @@ bife_fit <- function(beta, alpha, y, X, id, Ti, family, control) {
   trace <- control[["trace"]]
   
   # Compute initial quantities for the maximization routine
-  eta <- as.vector(X %*% beta + alpha[id])
+  eta <- as.vector(X %*% beta) + alpha[id]
   mu <- family[["linkinv"]](eta)
   wt <- rep(1.0, length(y))
   dev <- sum(family[["dev.resids"]](y, mu, wt))
@@ -273,7 +289,7 @@ bife_fit <- function(beta, alpha, y, X, id, Ti, family, control) {
     rho <- 1.0
     for (inner_iter in seq.int(iter_max)) {
       # Compute residual deviance
-      eta <- as.vector(X %*% (beta + rho * beta_upd) + (alpha + rho * alpha_upd)[id])
+      eta <- as.vector(X %*% (beta + rho * beta_upd)) + (alpha + rho * alpha_upd)[id]
       mu <- family[["linkinv"]](eta)
       dev <- sum(family[["dev.resids"]](y, mu, wt))
       
@@ -307,6 +323,11 @@ bife_fit <- function(beta, alpha, y, X, id, Ti, family, control) {
   }
   
   # Compute Hessian, standard errors of \alpha, and null deviance
+  eta <- as.vector(X %*% beta) + alpha[id]
+  mu <- family[["linkinv"]](eta)
+  mu_eta <- family[["mu.eta"]](eta)
+  w_tilde <- sqrt(mu_eta^2 / family[["variance"]](mu))
+  MX <- center_variables(X * w_tilde, w_tilde, Ti)
   H <- crossprod(MX)
   R <- try(chol(H), silent = TRUE)
   if (inherits(R, "try-error")) {
@@ -317,14 +338,16 @@ bife_fit <- function(beta, alpha, y, X, id, Ti, family, control) {
   null_dev <- sum(family[["dev.resids"]](y, mean(y), wt))
   
   # Return list
-  list(coefficients  = beta,
-       alpha         = alpha,
-       Hessian       = H,
-       se_alpha      = se_alpha,
-       deviance      = dev,
-       null_deviance = null_dev,
-       conv          = conv,
-       iter          = iter)
+  list(
+    coefficients  = beta,
+    alpha         = alpha,
+    Hessian       = H,
+    se_alpha      = se_alpha,
+    deviance      = dev,
+    null_deviance = null_dev,
+    conv          = conv,
+    iter          = iter
+    )
 }
 
 

@@ -50,7 +50,11 @@ head(psid)
 First, we use a specification similar to @fer09 and estimate a static model of women's labor supply where we control for unobserved individual heterogeneity (so called individual fixed effects).
 ```{r, eval = FALSE}
 library(bife)
-stat <- bife(LFP ~ KID1 + KID2 + KID3 + log(INCH) + AGE + I(AGE^2) | ID, psid, "probit")
+stat <- bife(
+  LFP ~ KID1 + KID2 + KID3 + log(INCH) + AGE + I(AGE^2) | ID,
+  data  = psid,
+  model = "probit"
+  )
 summary(stat)
 ```
 
@@ -72,7 +76,7 @@ summary(stat)
 ## 
 ## residual deviance= 6058.88,
 ## null deviance= 8152.05,
-## nT= 5976, N= 664
+## n= 5976, N= 664
 ## 
 ## ( 7173 observation(s) deleted due to perfect classification )
 ## 
@@ -80,7 +84,7 @@ summary(stat)
 ## 
 ## Average individual fixed effect= -1.121
 ```
-As `glm()`, the summary statistic of the model provides detailed information about the coefficients and some information about the model fit (`residual deviance` and `null deviance`). Furthermore, we report statistics that are specific to fixed effects models. More precisely, we learn that only 5,976 observations out of 13,149 contribute to the idenfication of the structural parameters. This is indicated by the message that 7,173 observations are deleted due to perfect classification. With respect to binary choice models those are observations that are related to women who never change their labor force participation status during the nine years observed. Thus those women were either always employed or unemployed. Overall the estimation results are based on 664 women observed for nine years.
+As `glm()`, the summary statistic of the model provides detailed information about the coefficients and some information about the model fit (`residual deviance` and `null deviance`). Furthermore, we report statistics that are specific to fixed effects models. More precisely, we learn that only 5,976 observations out of 13,149 contribute to the identification of the structural parameters. This is indicated by the message that 7,173 observations are deleted due to perfect classification. With respect to binary choice models those are observations that are related to women who never change their labor force participation status during the nine years observed. Thus those women were either always employed or unemployed. Overall the estimation results are based on 664 women observed for nine years.
 
 Because coefficients itself are not very meaningful, researchers are usually interested in so called partial effects (also known as marginal or ceteris paribus effects). A commonly used statistic is the average partial effect. `bife` offers a post-estimation routine to estimate average partial effects and their corresponding standard errors.
 ```{r, eval = FALSE}
@@ -91,12 +95,12 @@ summary(apes_stat)
 ```{r, eval = FALSE}
 ## Estimates:
 ##             Estimate Std. error z value Pr(> |z|)    
-## KID1      -9.278e-02  8.034e-03 -11.549   < 2e-16 ***
-## KID2      -5.343e-02  7.228e-03  -7.393  1.44e-13 ***
-## KID3      -1.687e-02  6.009e-03  -2.807     0.005 ** 
-## log(INCH) -3.140e-02  7.515e-03  -4.178  2.95e-05 ***
-## AGE        3.012e-02  5.306e-03   5.677  1.37e-08 ***
-## I(AGE^2)  -3.746e-04  7.071e-05  -5.298  1.17e-07 ***
+## KID1      -9.278e-02  7.728e-03 -12.006   < 2e-16 ***
+## KID2      -5.343e-02  7.116e-03  -7.508  5.99e-14 ***
+## KID3      -1.687e-02  5.995e-03  -2.813    0.0049 ** 
+## log(INCH) -3.140e-02  7.479e-03  -4.198  2.69e-05 ***
+## AGE        3.012e-02  5.258e-03   5.729  1.01e-08 ***
+## I(AGE^2)  -3.746e-04  7.015e-05  -5.340  9.29e-08 ***
 ## ---
 ## Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 ```
@@ -123,13 +127,15 @@ summary(stat_bc)
 ## ---
 ## Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 ## 
-## residual deviance= 6062.8,
+## residual deviance= 6058.88,
 ## null deviance= 8152.05,
-## nT= 5976, N= 664
+## n= 5976, N= 664
 ## 
 ## ( 7173 observation(s) deleted due to perfect classification )
 ## 
 ## Number of Fisher Scoring Iterations: 6 
+## 
+## Average individual fixed effect= -0.969
 ```
 
 ```{r, eval = FALSE}
@@ -140,12 +146,12 @@ summary(apes_stat_bc)
 ```{r, eval = FALSE}
 ## Estimates:
 ##             Estimate Std. error z value Pr(> |z|)    
-## KID1      -9.127e-02  7.830e-03 -11.657   < 2e-16 ***
-## KID2      -5.259e-02  7.146e-03  -7.359  1.85e-13 ***
-## KID3      -1.664e-02  5.962e-03  -2.790   0.00526 ** 
-## log(INCH) -3.095e-02  7.406e-03  -4.180  2.92e-05 ***
-## AGE        2.970e-02  5.274e-03   5.632  1.79e-08 ***
-## I(AGE^2)  -3.692e-04  7.031e-05  -5.251  1.51e-07 ***
+## KID1      -1.016e-01  7.582e-03 -13.394   < 2e-16 ***
+## KID2      -5.852e-02  7.057e-03  -8.292   < 2e-16 ***
+## KID3      -1.851e-02  5.951e-03  -3.110   0.00187 ** 
+## log(INCH) -3.444e-02  7.376e-03  -4.669  3.03e-06 ***
+## AGE        3.304e-02  5.235e-03   6.312  2.76e-10 ***
+## I(AGE^2)  -4.108e-04  6.986e-05  -5.880  4.10e-09 ***
 ## ---
 ## Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 ```
@@ -162,7 +168,11 @@ psid[, LLFP := shift(LFP), by = ID]
 
 Contrary to the bias correction for the static models, we need to additionally provide a bandwidth parameter (`L`) that is required for the estimation of spectral densities (see @hah11). @fer18 suggest to do a sensitivity analysis and try different values for `L` but not larger than four.
 ```{r, eval = FALSE}
-dyn <- bife(LFP ~ LLFP + KID1 + KID2 + KID3 + log(INCH) + AGE + I(AGE^2) | ID, psid, "probit")
+dyn <- bife(
+  LFP ~ LLFP + KID1 + KID2 + KID3 + log(INCH) + AGE + I(AGE^2) | ID,
+  data  = psid,
+  model = "probit"
+  )
 dyn_bc <- bias_corr(dyn, L = 1L)
 summary(dyn_bc)
 ```
@@ -185,9 +195,9 @@ summary(dyn_bc)
 ## ---
 ## Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 ## 
-## residual deviance= 4822.99,
+## residual deviance= 4774.57,
 ## null deviance= 6549.14,
-## nT= 4792, N= 599
+## n= 4792, N= 599
 ## 
 ## ( 1461 observation(s) deleted due to missingness )
 ## ( 6896 observation(s) deleted due to perfect classification )
@@ -205,13 +215,13 @@ summary(apes_dyn_bc)
 ```{r, eval = FALSE}
 ## Estimates:
 ##             Estimate Std. error z value Pr(> |z|)    
-## LLFP       0.1537523  0.0072038  21.343   < 2e-16 ***
-## KID1      -0.0617373  0.0078862  -7.828  4.94e-15 ***
-## KID2      -0.0255003  0.0072685  -3.508  0.000451 ***
-## KID3      -0.0098186  0.0058864  -1.668  0.095314 .  
-## log(INCH) -0.0253520  0.0070041  -3.620  0.000295 ***
-## AGE        0.0261671  0.0054330   4.816  1.46e-06 ***
-## I(AGE^2)  -0.0003144  0.0000714  -4.403  1.07e-05 ***
+## LLFP       1.826e-01  6.671e-03  27.378   < 2e-16 ***
+## KID1      -7.525e-02  7.768e-03  -9.687   < 2e-16 ***
+## KID2      -3.108e-02  7.239e-03  -4.294  1.76e-05 ***
+## KID3      -1.197e-02  5.886e-03  -2.033     0.042 *  
+## log(INCH) -3.090e-02  6.992e-03  -4.419  9.91e-06 ***
+## AGE        3.189e-02  5.403e-03   5.903  3.57e-09 ***
+## I(AGE^2)  -3.832e-04  7.107e-05  -5.391  7.00e-08 ***
 ## ---
 ## Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 ```

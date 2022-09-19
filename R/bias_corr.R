@@ -8,7 +8,7 @@
 #' the structural parameters.
 #' 
 #' \strong{Remark:} Fernández-Val (2009) further refined the bias correction of 
-#' Hahn and Newey (2004). The correction is now also applicable to dynamic models.
+#' Hahn and Newey (2004). The correction is now also applicable to models with weakly exogenous regressors.
 #' @param
 #' object an object of class \code{"bife"}.
 #' @param
@@ -76,9 +76,10 @@ bias_corr <- function(object, L = 0L) {
   attr(X, "dimnames") <- NULL
   
   # Compute required derivatives
-  beta <- object[["coefficients"]]
+  beta_uncorr <- object[["coefficients"]]
+  alpha_uncorr <- object[["alpha"]]
   family <- object[["family"]]
-  eta <- as.vector(X %*% beta + object[["alpha"]][id])
+  eta <- as.vector(X %*% beta_uncorr) + alpha_uncorr[id]
   mu <- family[["linkinv"]](eta)
   mu_eta <- family[["mu.eta"]](eta)
   if (family[["link"]] == "logit") {
@@ -93,42 +94,41 @@ bias_corr <- function(object, L = 0L) {
   }
   
   # Bias correction of Fernández-Val (2009)
+  nt <- object[["nobs"]][["nobs"]]
   MX <- center_variables(X * sqrt(w), sqrt(w), Ti) / sqrt(w)
-  B <- as.vector(group_sums_bias(MX * z, w, Ti)) / 2.0
+  B <- as.vector(group_sums_bias(MX * z, w, Ti)) / 2.0 / nt
   if (L > 0L) {
-    B <- B + as.vector(group_sums_spectral(MX * w, v, w, L, Ti))
+    B <- B + as.vector(group_sums_spectral(MX * w, v, w, L, Ti)) / nt
   }
-  beta <- beta - solve(object[["Hessian"]], - B)
+  bias_term <- solve(object[["Hessian"]] / nt, - B)
+  beta <- beta_uncorr - bias_term
   rm(mu, v, MX)
   
-  # Adjust \alpha using an offset algorithm and update \eta
-  eta <- as.vector(X %*% beta)
-  alpha <- bife_offset(y, eta, id, Ti, family, object[["control"]])
+  # Adjust \alpha using an offset algorithm and update the linear index
+  xb <- as.vector(X %*% beta)
+  alpha <- bife_offset(y, xb, id, Ti, family, object[["control"]])
   
-  # Recompute weights
-  eta <- eta + alpha[id]
+  # Recompute Hessian
+  eta <- xb + alpha[id]
   mu_eta <- family[["mu.eta"]](eta)
   if (family[["link"]] == "logit") {
     w <- mu_eta
   } else {
     w <- mu_eta^2 / family[["variance"]](family[["linkinv"]](eta))
   }
-  
-  # Recompute Hessian
   H <- crossprod(center_variables(X * sqrt(w), sqrt(w), Ti))
   
-  # Recompute deviance
-  mu <- family[["linkinv"]](eta)
-  dev <- sum(family[["dev.resids"]](y, mu, rep(1.0, length(y))))
-  
   # Add names and modify result list
-  dimnames(H) <- list(names(beta), names(beta))
-  names(alpha) <- names(object[["alpha"]])
+  names(beta) <- names(beta_uncorr)
+  names(alpha) <- names(alpha_uncorr)
+  dimnames(H) <- list(names(beta_uncorr), names(beta_uncorr))
   object[["coefficients"]] <- beta
+  object[["coefficients_uncorr"]] <- beta_uncorr
   object[["alpha"]] <- alpha
-  object[["deviance"]] <- dev
-  object[["Hessian"]] <- H
+  object[["alpha_uncorr"]] <- alpha_uncorr
+  object[["bias_term"]] <- bias_term
   object[["bandwidth"]] <- L
+  object[["Hessian"]] <- H
   
   # Return updated result list
   object

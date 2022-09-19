@@ -18,18 +18,18 @@
 #' Cruz-Gonzalez, Fernández-Val, and Weidner (2017). The correction factor is computed as follows: 
 #' \eqn{(n^{\ast} - n) / (n^{\ast} - 1)}{(n.pop - n) / (n.pop - 1)}, 
 #' where \eqn{n^{\ast}}{n.pop} and \eqn{n}{n} are the size of the entire 
-#' population and the full sample size. Default is \code{NULL}, which refers to a factor of one and 
-#' is equal to an infinitely large population.
+#' population and the full sample size. Default is \code{NULL}, which refers to a factor of zero and 
+#' a covariance obtained by the delta method.
 #' @param
 #' sampling_fe a string equal to \code{"independence"} or \code{"unrestricted"} which imposes 
 #' sampling assumptions about the unobserved effects. \code{"independence"} imposes that all 
 #' unobserved effects are mutually independent sequences. \code{"unrestricted"} does not impose any
-#' sampling assumptions. Note that this option only affects the estimation of the covariance. 
+#' sampling assumptions. Note that this option only affects the optional finite population correction. 
 #' Default is \code{"independence"}.
 #' @param
 #' weak_exo logical indicating if some of the regressors are assumed to be weakly exogenous (e.g. 
 #' predetermined). If object is returned by \code{\link{bias_corr}}, the option will be 
-#' automatically set to \code{TRUE} if the choosen bandwidth parameter is larger than zero. 
+#' automatically set to \code{TRUE} if the chosen bandwidth parameter is larger than zero. 
 #' Note that this option only affects the estimation of the covariance matrix. 
 #' Default is \code{FALSE}, which assumes that all regressors are strictly exogenous.
 #' @param
@@ -76,10 +76,12 @@
 #' summary(mod_ape_bc)
 #' }
 #' @export
-get_APEs <- function(object,
-                     n_pop       = NULL,
-                     sampling_fe = c("independence", "unrestricted"),
-                     weak_exo    = FALSE) {
+get_APEs <- function(
+    object,
+    n_pop       = NULL,
+    sampling_fe = c("independence", "unrestricted"),
+    weak_exo    = FALSE
+    ) {
   # Validity of input argument (object)
   if (!inherits(object, "bife")) {
     stop("'get_APEs' called on a non-'bife' object.", call. = FALSE)
@@ -121,7 +123,7 @@ get_APEs <- function(object,
       adj <- (n_pop - nt_full) / (n_pop - 1L)
     }
   } else {
-    adj <- 1.0
+    adj <- 0.0
   }
   
   # Extract model response and regressor matrix
@@ -150,32 +152,33 @@ get_APEs <- function(object,
   rm(y)
   
   # Compute average partial effects and Jacobian
-  PX <- X - center_variables(X * sqrt(w), sqrt(w), Ti) / sqrt(w)
+  MX <- center_variables(X * sqrt(w), sqrt(w), Ti) / sqrt(w)
+  PX <- X - MX
   Delta <- matrix(NA_real_, nt, p)
   Delta1 <- matrix(NA_real_, nt, p)
   J <- matrix(NA_real_, p, p)
   Delta[, !binary] <- mu_eta
   Delta1[, !binary] <- partial_mu_eta(eta, family, 2L)
-  for (i in seq.int(p)) {
-    if (binary[[i]]) {
-      eta0 <- eta - X[, i] * beta[[i]]
-      f1 <- family[["mu.eta"]](eta0 + beta[[i]])
-      Delta[, i] <- family[["linkinv"]](eta0 + beta[[i]]) - family[["linkinv"]](eta0)
-      Delta1[, i] <- f1 - family[["mu.eta"]](eta0)
-      J[i, ] <- - colSums(PX * Delta1[, i])
-      J[i, i] <- sum(f1) + J[i, i]
-      J[i, - i] <- colSums(X[, - i, drop = FALSE] * Delta1[, i]) + J[i, - i]
+  for (j in seq.int(p)) {
+    if (binary[[j]]) {
+      eta0 <- eta - X[, j] * beta[[j]]
+      f1 <- family[["mu.eta"]](eta0 + beta[[j]])
+      Delta[, j] <- family[["linkinv"]](eta0 + beta[[j]]) - family[["linkinv"]](eta0)
+      Delta1[, j] <- f1 - family[["mu.eta"]](eta0)
+      J[, j] <- - colSums(PX * Delta1[, j]) / nt_full
+      J[j, j] <- sum(f1) / nt_full + J[j, j]
+      J[- j, j] <- colSums(X[, - j, drop = FALSE] * Delta1[, j]) / nt_full + J[- j, j]
       rm(eta0, f1)
     } else {
-      Delta[, i] <- beta[[i]] * Delta[, i]
-      Delta1[, i] <- beta[[i]] * Delta1[, i]
-      J[i, ] <- colSums((X - PX) * Delta1[, i])
-      J[i, i] <- sum(mu_eta) + J[i, i]
+      Delta[, j] <- beta[[j]] * Delta[, j]
+      Delta1[, j] <- beta[[j]] * Delta1[, j]
+      J[, j] <- colSums(MX * Delta1[, j]) / nt_full
+      J[j, j] <- sum(mu_eta) / nt_full + J[j, j]
     }
   }
   delta <- colSums(Delta) / nt_full
-  Delta <- t(t(Delta) - delta)
-  rm(mu_eta)
+  Delta <- t(t(Delta) - delta) / nt_full
+  rm(mu, mu_eta, PX)
   
   # Compute projection of \Psi
   Psi <- - Delta1 / w
@@ -188,56 +191,55 @@ get_APEs <- function(object,
     # Compute second-order partial derivatives
     Delta2 <- matrix(NA_real_, nt, p)
     Delta2[, !binary] <- partial_mu_eta(eta, family, 3L)
-    for (i in seq.int(p)) {
-      if (binary[[i]]) {
-        eta0 <- eta - X[, i] * beta[[i]]
-        Delta2[, i] <- partial_mu_eta(eta0 + beta[[i]], family, 2L) - 
+    for (j in seq.int(p)) {
+      if (binary[[j]]) {
+        eta0 <- eta - X[, j] * beta[[j]]
+        Delta2[, j] <- partial_mu_eta(eta0 + beta[[j]], family, 2L) - 
           partial_mu_eta(eta0, family, 2L)
         rm(eta0)
       } else {
-        Delta2[, i] <- beta[[i]] * Delta2[, i]
+        Delta2[, j] <- beta[[j]] * Delta2[, j]
       }
     }
     
     # Compute corrected average partial effect using the bias correction of Fernández-Val (2009)
-    B <- as.vector(group_sums_bias(PPsi * z + Delta2, w, Ti)) / 2.0
+    B <- as.vector(group_sums_bias(Delta2 + PPsi * z, w, Ti)) / 2.0
     rm(Delta2)
     if (L > 0L) {
       B <- B - as.vector(group_sums_spectral(MPsi * w, v, w, L, Ti))
     }
-    delta <- delta - B / nt_full
+    delta <- delta - B / nt
   }
-  rm(eta, mu, MPsi)
+  rm(eta, w, z, MPsi)
   
   # Compute standard errors
-  J <- J %*% solve(object[["Hessian"]])
-  Gamma <- tcrossprod((X - PX) * v, J) - PPsi * v
+  WinvJ <- solve(object[["Hessian"]] / nt_full, J)
+  Gamma <- (MX %*% WinvJ - PPsi) * v / nt_full
   V <- crossprod(Gamma)
   if (adj > 0.0) {
     # Simplify covariance if sampling assumptions are imposed
     if (sampling_fe == "independence") {
       V <- V + adj * group_sums_var(Delta, Ti)
-    } else {
-      V <- V + adj * tcrossprod(colSums(Delta))
     }
     
     # Add covariance in case of weak exogeneity
     if (weak_exo) {
-      V <- V + adj * 2.0 * group_sums_cov(Delta, Gamma, Ti)
+      C <- group_sums_cov(Delta, Gamma, Ti)
+      V <- V + adj * (C + t(C))
     }
   }
-  V <- V / nt_full^2
   
   # Add names
   names(delta) <- names(beta)
   dimnames(V) <- list(names(beta), names(beta))
   
   # Return result list
-  structure(list(delta       = delta,
-                 vcov        = V,
-                 sampling_fe = sampling_fe,
-                 weak_exo    = weak_exo),
-            class = "bifeAPEs")
+  structure(list(
+    delta       = delta,
+    vcov        = V,
+    sampling_fe = sampling_fe,
+    weak_exo    = weak_exo
+    ), class = "bifeAPEs")
 }
 
 

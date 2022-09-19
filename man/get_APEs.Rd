@@ -22,18 +22,18 @@ covariance matrix of the average partial effects proposed by
 Cruz-Gonzalez, Fernández-Val, and Weidner (2017). The correction factor is computed as follows: 
 \eqn{(n^{\ast} - n) / (n^{\ast} - 1)}{(n.pop - n) / (n.pop - 1)}, 
 where \eqn{n^{\ast}}{n.pop} and \eqn{n}{n} are the size of the entire 
-population and the full sample size. Default is \code{NULL}, which refers to a factor of one and 
-is equal to an infinitely large population.}
+population and the full sample size. Default is \code{NULL}, which refers to a factor of zero and 
+a covariance obtained by the delta method.}
 
 \item{sampling_fe}{a string equal to \code{"independence"} or \code{"unrestricted"} which imposes 
 sampling assumptions about the unobserved effects. \code{"independence"} imposes that all 
 unobserved effects are mutually independent sequences. \code{"unrestricted"} does not impose any
-sampling assumptions. Note that this option only affects the estimation of the covariance. 
+sampling assumptions. Note that this option only affects the optional finite population correction. 
 Default is \code{"independence"}.}
 
 \item{weak_exo}{logical indicating if some of the regressors are assumed to be weakly exogenous (e.g. 
 predetermined). If object is returned by \code{\link{bias_corr}}, the option will be 
-automatically set to \code{TRUE} if the choosen bandwidth parameter is larger than zero. 
+automatically set to \code{TRUE} if the chosen bandwidth parameter is larger than zero. 
 Note that this option only affects the estimation of the covariance matrix. 
 Default is \code{FALSE}, which assumes that all regressors are strictly exogenous.}
 

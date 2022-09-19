@@ -26,7 +26,7 @@ bias correction derived by Fernández-Val (2009) to obtain bias-corrected estima
 the structural parameters.
 
 \strong{Remark:} Fernández-Val (2009) further refined the bias correction of 
-Hahn and Newey (2004). The correction is now also applicable to dynamic models.
+Hahn and Newey (2004). The correction is now also applicable to models with weakly exogenous regressors.
 }
 \examples{
 \donttest{

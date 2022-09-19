@@ -6,6 +6,11 @@
 
 using namespace Rcpp;
 
+#ifdef RCPP_USE_GLOBAL_ROSTREAM
+Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
+Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
+#endif
+
 // group_sums
 arma::vec group_sums(const arma::vec& kv, const arma::ivec& kT);
 RcppExport SEXP _bife_group_sums(SEXP kvSEXP, SEXP kTSEXP) {
