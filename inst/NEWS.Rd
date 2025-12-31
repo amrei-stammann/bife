@@ -1,5 +1,11 @@
 \name{NEWS}
 \title{bife news}
+\section{Changes in version 0.7.3}{
+  \itemize{
+    \item Replaced `qr()` by `lm.fit` to fix memory issue
+    \item Updated maintainer email address and removed CPP11 restriction (#13 @zeileis)
+  }
+}
 \section{Changes in version 0.7.2}{
   \itemize{
     \item Replaced NEWS.txt with NEWS.Rd.

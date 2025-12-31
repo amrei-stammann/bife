@@ -18,20 +18,20 @@ bife(
 )
 }
 \arguments{
-\item{formula}{an object of class \code{"formula"} (or one that can be coerced to that class): 
-a symbolic description of the model to be fitted. \code{formula} must be of type 
+\item{formula}{an object of class \code{"formula"} (or one that can be coerced to that class):
+a symbolic description of the model to be fitted. \code{formula} must be of type
 \eqn{y ~ x | id} where the \code{id} refers to an individual identifier (fixed effect category).}
 
 \item{data}{an object of class \code{"data.frame"} containing the variables in the model.}
 
-\item{model}{the description of the error distribution and link function to be used in the model. 
-For \code{\link{bife}} this has to be a character string naming the model function. 
+\item{model}{the description of the error distribution and link function to be used in the model.
+For \code{\link{bife}} this has to be a character string naming the model function.
 Default is \code{"logit"}.}
 
-\item{beta_start}{an optional vector of starting values used for the structural parameters in the 
+\item{beta_start}{an optional vector of starting values used for the structural parameters in the
 optimization algorithm. Default is zero for all structural parameters.}
 
-\item{control}{a named list of parameters for controlling the fitting process. See 
+\item{control}{a named list of parameters for controlling the fitting process. See
 \code{\link{bife_control}} for details.}
 
 \item{bias_corr}{deprecated; see \code{\link{bias_corr}}.}
@@ -42,24 +42,24 @@ optimization algorithm. Default is zero for all structural parameters.}
 The function \code{\link{bife}} returns a named list of class \code{"bife"}.
 }
 \description{
-\code{\link{bife}} can be used to fit fixed effects binary choice models (logit and probit) 
-based on an unconditional maximum likelihood approach. It is tailored for the fast estimation of 
-binary choice models with potentially many individual fixed effects. The routine is based on a 
-special pseudo demeaning algorithm derived by Stammann, Heiss, and McFadden (2016). The 
-estimates obtained are identical to the ones of \code{\link[stats]{glm}}, but the computation 
+\code{\link{bife}} can be used to fit fixed effects binary choice models (logit and probit)
+based on an unconditional maximum likelihood approach. It is tailored for the fast estimation of
+binary choice models with potentially many individual fixed effects. The routine is based on a
+special pseudo demeaning algorithm derived by Stammann, Heiss, and McFadden (2016). The
+estimates obtained are identical to the ones of \code{\link[stats]{glm}}, but the computation
 time of \code{\link{bife}} is much lower.
 
-\strong{Remark:} The term fixed effect is used in econometrician's sense of having a full set of 
-individual specific intercepts. All other parameters in the model are referred to as 
+\strong{Remark:} The term fixed effect is used in econometrician's sense of having a full set of
+individual specific intercepts. All other parameters in the model are referred to as
 structural parameters.
 }
 \details{
-\code{\link{bife}} drops all observations of cross-sectional units (individuals) with 
-non-varying response. This can de done because these observations do not contribute to the 
+\code{\link{bife}} drops all observations of cross-sectional units (individuals) with
+non-varying response. This can de done because these observations do not contribute to the
 identification of the structural parameters (perfect classification).
 
-If \code{\link{bife}} does not converge this is usually a sign of linear dependence between 
-one or more regressors and the fixed effects. In this case, you should carefully inspect 
+If \code{\link{bife}} does not converge this is usually a sign of linear dependence between
+one or more regressors and the fixed effects. In this case, you should carefully inspect
 your model specification.
 }
 \examples{
@@ -74,6 +74,6 @@ summary(mod)
 }
 }
 \references{
-Stammann, A., F. Heiss, and D. McFadden (2016). "Estimating Fixed Effects Logit Models with 
+Stammann, A., F. Heiss, and D. McFadden (2016). "Estimating Fixed Effects Logit Models with
 Large Panel Data". Working paper.
 }

@@ -13,9 +13,9 @@ bife_control(
 )
 }
 \arguments{
-\item{dev_tol}{tolerance level for the first stopping condition of the maximization routine. The 
+\item{dev_tol}{tolerance level for the first stopping condition of the maximization routine. The
 stopping condition is based on the relative change of the deviance in iteration \eqn{r}
-and can be expressed as follows: 
+and can be expressed as follows:
 \eqn{|dev_{r} - dev_{r - 1}| / (0.1 + |dev_{r}|) < tol}{|dev - devold| / (0.1 + |dev|) < tol}.
 Default is \code{1.0e-08}.}
 
@@ -27,7 +27,7 @@ routine. Default is \code{25L}.}
 \item{conv_tol, rho_tol}{deprecated; step-halving is now similar to \code{glm.fit2}.}
 }
 \value{
-The function \code{\link{bife_control}} returns a named list of control 
+The function \code{\link{bife_control}} returns a named list of control
 parameters.
 }
 \description{
